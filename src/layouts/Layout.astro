@@ -51,6 +51,21 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
         </p>
       </footer>
     </div>
+
+    <div id="easter-egg" class="easter-egg" style="display: none;">
+      <div class="easter-egg-backdrop"></div>
+      <div class="easter-egg-terminal">
+        <div class="easter-egg-header">
+          <span class="easter-egg-dot" style="background:#ff5f57;"></span>
+          <span class="easter-egg-dot" style="background:#febc2e;"></span>
+          <span class="easter-egg-dot" style="background:#28c840;"></span>
+          <span class="easter-egg-title">terminal — nabilalkahar.com</span>
+        </div>
+        <div class="easter-egg-body">
+          <pre class="easter-egg-output" id="easter-egg-output"></pre>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
 
@@ -123,7 +138,93 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
       } else {
         enableTrail();
       }
-      console.log('Cursor trail: ' + (trailOn ? 'on' : 'off'));
+    }
+  });
+</script>
+
+<script>
+  const KONAMI = [
+    'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
+    'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight',
+    'KeyB', 'KeyA'
+  ];
+
+  const SECRET = `
+$ whoami
+nabil_alkahar
+
+$ cat /etc/motd
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃   ☆  ACCESS GRANTED — LEVEL 9  ☆        ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+$ ls -la ~/secrets/
+drwx------  .classified/
+  ├── kopi_rating_tokyo........98/100
+  ├── best_viewpoint_jakarta...downtown at dusk
+  ├── why_architects_smile.....because we saw the stack trace
+  └── source_code..............thoughtfully over-engineered
+
+$ fortune
+"Technology is best when it brings people together."
+  — Matt Mullenweg
+
+"Also: clean code > clever code."
+
+$ exit
+  `.trim();
+
+  let konamiIndex = 0;
+  let typewriterTimer = null;
+
+  document.addEventListener('keydown', function handler(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    if (e.code === KONAMI[konamiIndex]) {
+      konamiIndex++;
+      if (konamiIndex === KONAMI.length) {
+        konamiIndex = 0;
+        triggerEasterEgg();
+      }
+    } else {
+      konamiIndex = 0;
+      if (e.code === KONAMI[0]) konamiIndex = 1;
+    }
+  });
+
+  function triggerEasterEgg() {
+    const overlay = document.getElementById('easter-egg');
+    const output = document.getElementById('easter-egg-output');
+    if (!overlay || !output) return;
+
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    output.textContent = '';
+
+    let i = 0;
+    clearInterval(typewriterTimer);
+    typewriterTimer = setInterval(() => {
+      if (i < SECRET.length) {
+        output.textContent += SECRET[i];
+        i++;
+      } else {
+        clearInterval(typewriterTimer);
+      }
+    }, 25);
+  }
+
+  function closeEasterEgg() {
+    const overlay = document.getElementById('easter-egg');
+    if (!overlay) return;
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+    clearInterval(typewriterTimer);
+  }
+
+  document.getElementById('easter-egg')?.querySelector('.easter-egg-backdrop')?.addEventListener('click', closeEasterEgg);
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('easter-egg')?.style.display === 'flex') {
+      closeEasterEgg();
     }
   });
 </script>
@@ -236,6 +337,79 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
 
   footer {
     border-color: var(--border) !important;
+  }
+
+  .easter-egg {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .easter-egg-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    cursor: pointer;
+  }
+
+  .easter-egg-terminal {
+    position: relative;
+    z-index: 1;
+    width: min(90vw, 680px);
+    background: #0a0a0a;
+    border: 1px solid #333;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+  }
+
+  .easter-egg-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+  }
+
+  .easter-egg-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .easter-egg-title {
+    margin-left: 8px;
+    font-size: 0.75rem;
+    color: #666;
+  }
+
+  .easter-egg-body {
+    padding: 16px 20px;
+    min-height: 280px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .easter-egg-output {
+    color: #b3ffb3;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+    min-height: 260px;
+  }
+
+  .easter-egg-output::after {
+    content: '█';
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
   }
 
   @media print {
