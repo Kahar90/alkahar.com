@@ -9,12 +9,13 @@ Personal website of Nabil Alkahar — Solutions Architect, Software Engineer, an
 - **TypeScript** — Type safety
 - **Astro Content Collections** — Markdown blog processing
 - **Sharp** — Image optimization at build time
+- **Bun** — JavaScript runtime and package manager
 
 ## Getting Started
 
 ```bash
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 Open [http://localhost:4321](http://localhost:4321).
@@ -59,7 +60,7 @@ No imports needed — Astro serves them as static files.
 ## Building for Production
 
 ```bash
-npm run build
+bun run build
 ```
 
 The static site is output to the `dist/` directory. Deploy it to GitHub Pages, Vercel, Cloudflare Pages, or any static host.
