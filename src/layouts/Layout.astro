@@ -66,6 +66,11 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
         </div>
       </div>
     </div>
+
+    <div id="wandering-cat" class="wandering-cat-container" aria-hidden="true">
+      <div id="meow-bubble" class="meow-bubble"></div>
+      <pre id="wandering-cat-art" class="wandering-cat-art"></pre>
+    </div>
   </body>
 </html>
 
@@ -227,6 +232,181 @@ $ exit
       closeEasterEgg();
     }
   });
+</script>
+
+<script>
+(function () {
+  var container = document.getElementById('wandering-cat');
+  var artEl = document.getElementById('wandering-cat-art');
+  var bubble = document.getElementById('meow-bubble');
+  var footer = document.querySelector('footer');
+
+  if (!container || !artEl || !bubble || !footer) return;
+
+  var FRAME_REST = [
+    ' /\\_/\\  ',
+    '( o.o ) ',
+    ' >   <  '
+  ];
+  var FRAME_WALK = [
+    ' /\\_/\\  ',
+    '( -.- ) ',
+    ' > ^ <  '
+  ];
+  var currentFrame = 0;
+  var frameTimer = null;
+  var facingRight = true;
+
+  function setArt(frame) {
+    artEl.textContent = frame.join('\n');
+  }
+
+  function startWalkAnim() {
+    setArt(FRAME_WALK);
+    clearInterval(frameTimer);
+    frameTimer = setInterval(function () {
+      currentFrame = (currentFrame + 1) % 2;
+      setArt(currentFrame === 0 ? FRAME_WALK : FRAME_REST);
+    }, 400);
+  }
+
+  function stopWalkAnim() {
+    clearInterval(frameTimer);
+    setArt(FRAME_REST);
+  }
+
+  var observer = new IntersectionObserver(function (entries) {
+    if (entries[0].isIntersecting) {
+      container.classList.add('visible');
+      startWalkAnim();
+      startWalking();
+    } else {
+      container.classList.remove('visible');
+      stopWalking();
+      stopWalkAnim();
+    }
+  }, { threshold: 0 });
+  observer.observe(footer);
+
+  var walkTimer = null;
+  var posX = 40;
+  var posY = window.innerHeight * 0.78;
+  var targetX = posX;
+  var targetY = posY;
+  var animFrame = null;
+
+  function randBetween(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  function pickTarget() {
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var minX = 10;
+    var maxX = vw - 80;
+    var minY = vh * 0.65;
+    var maxY = vh - 100;
+    return { x: randBetween(minX, maxX), y: randBetween(minY, maxY) };
+  }
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  function animate() {
+    var speed = 0.03;
+    posX = lerp(posX, targetX, speed);
+    posY = lerp(posY, targetY, speed);
+
+    var dx = targetX - posX;
+    if (Math.abs(dx) > 2) {
+      facingRight = dx > 0;
+    }
+
+    var scaleX = facingRight ? 1 : -1;
+    container.style.transform = 'translate(' + posX + 'px, ' + posY + 'px) scaleX(' + scaleX + ')';
+
+    if (Math.abs(targetX - posX) > 1 || Math.abs(targetY - posY) > 1) {
+      animFrame = requestAnimationFrame(animate);
+    }
+  }
+
+  function startWalking() {
+    if (walkTimer) return;
+    posX = randBetween(10, window.innerWidth - 80);
+    posY = randBetween(window.innerHeight * 0.65, window.innerHeight - 100);
+    container.style.transform = 'translate(' + posX + 'px, ' + posY + 'px) scaleX(1)';
+    walkTimer = setInterval(function () {
+      var t = pickTarget();
+      targetX = t.x;
+      targetY = t.y;
+      if (animFrame) cancelAnimationFrame(animFrame);
+      animFrame = requestAnimationFrame(animate);
+    }, 3500);
+    var t = pickTarget();
+    targetX = t.x;
+    targetY = t.y;
+    animFrame = requestAnimationFrame(animate);
+  }
+
+  function stopWalking() {
+    clearInterval(walkTimer);
+    walkTimer = null;
+    if (animFrame) {
+      cancelAnimationFrame(animFrame);
+      animFrame = null;
+    }
+    stopWalkAnim();
+  }
+
+  var lastInteraction = 0;
+  var COOLDOWN = 2000;
+  var CHANCE = 0.3;
+
+  function meow() {
+    bubble.textContent = 'mew!';
+    bubble.classList.add('show');
+    setTimeout(function () {
+      bubble.classList.remove('show');
+    }, 1400);
+  }
+
+  function jump() {
+    container.style.transition = 'none';
+    var orig = container.style.transform;
+    var jumpY = posY - 30;
+    container.style.transform = 'translate(' + posX + 'px, ' + jumpY + 'px) scaleX(' + (facingRight ? 1 : -1) + ')';
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        container.style.transition = 'transform 0.3s cubic-bezier(0.46, 1.42, 0.6, 1.0)';
+        container.style.transform = orig;
+      });
+    });
+  }
+
+  artEl.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var now = Date.now();
+    if (now - lastInteraction < COOLDOWN) return;
+    if (Math.random() > CHANCE) return;
+    lastInteraction = now;
+    if (Math.random() < 0.5) {
+      meow();
+    } else {
+      jump();
+    }
+  });
+
+  var resizeDebounce;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeDebounce);
+    resizeDebounce = setTimeout(function () {
+      if (container.classList.contains('visible')) {
+        var t = pickTarget();
+        targetX = t.x;
+        targetY = t.y;
+      }
+    }, 200);
+  });
+})();
 </script>
 
 <style is:global>
@@ -483,5 +663,50 @@ $ exit
     @page {
       margin: 2cm;
     }
+  }
+
+  .wandering-cat-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    will-change: transform;
+  }
+
+  .wandering-cat-container.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .wandering-cat-art {
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--muted);
+    white-space: pre;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .meow-bubble {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.625rem;
+    color: var(--fg);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .meow-bubble.show {
+    opacity: 1;
   }
 </style>
