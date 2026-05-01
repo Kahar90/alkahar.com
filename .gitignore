@@ -1,0 +1,11 @@
+/node_modules
+/dist
+/.astro
+*.log
+*.local
+.env
+.env.production
+.DS_Store
+
+# Uncomment the line below if you want to keep gallery images out of git
+# src/assets/gallery/

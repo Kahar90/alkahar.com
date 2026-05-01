@@ -1,0 +1,175 @@
+---
+export interface Props {
+  title: string;
+  description?: string;
+  wide?: boolean;
+}
+
+const { title, description = 'Personal website of Nabil Alkahar', wide = false } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <script is:inline>
+      const theme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (theme === 'dark' || (!theme && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+  </head>
+  <body class="min-h-screen font-mono transition-colors duration-300">
+    <div class={wide ? 'w-full px-6 py-12' : 'max-w-[65ch] mx-auto px-6 py-12'}>
+      <header class="mb-12 flex justify-between items-center">
+        <nav class="flex gap-6 text-sm">
+          <a href="/" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg">home</a>
+          <a href="/about" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg">about</a>
+          <a href="/blog" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg">blog</a>
+          <a href="/gallery" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg">gallery</a>
+        </nav>
+        <button
+          id="theme-toggle"
+          class="text-sm text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg cursor-pointer bg-transparent border-none font-mono"
+          aria-label="Toggle dark mode"
+        >
+          [theme]
+        </button>
+      </header>
+      <main>
+        <slot />
+      </main>
+      <footer class={wide ? 'max-w-[65ch] mx-auto mt-24 pt-6 border-t border-neutral-200 text-sm text-muted' : 'mt-24 pt-6 border-t border-neutral-200 text-sm text-muted'}>
+        <p>&copy; {new Date().getFullYear()} Nabil Alkahar. All rights reserved.</p>
+        <p class="text-xs mt-1" style="color: var(--muted);">
+          Last updated: {new Date().toLocaleString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>
+
+<script>
+  const toggle = document.getElementById('theme-toggle');
+  const html = document.documentElement;
+
+  toggle?.addEventListener('click', () => {
+    html.classList.toggle('dark');
+    localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+  });
+</script>
+
+<style is:global>
+  :root {
+    --fg: #111111;
+    --bg: #fafafa;
+    --muted: #666666;
+    --accent: #2563eb;
+    --border: #e5e5e5;
+    --code-bg: #f0f0f0;
+  }
+
+  html.dark {
+    --fg: #e5e5e5;
+    --bg: #111111;
+    --muted: #999999;
+    --accent: #60a5fa;
+    --border: #333333;
+    --code-bg: #1a1a1a;
+  }
+
+  body {
+    color: var(--fg);
+    background-color: var(--bg);
+  }
+
+  .text-fg { color: var(--fg); }
+  .bg-bg { background-color: var(--bg); }
+  .text-muted { color: var(--muted); }
+  .text-accent { color: var(--accent); }
+
+  ::selection {
+    background: var(--fg);
+    color: var(--bg);
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+  }
+
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    line-height: 1.3;
+    color: var(--fg);
+  }
+  .prose h1 { font-size: 1.5rem; }
+  .prose h2 { font-size: 1.25rem; }
+  .prose h3 { font-size: 1.125rem; }
+
+  .prose p {
+    margin-bottom: 1.25rem;
+    line-height: 1.7;
+    color: var(--fg);
+  }
+
+  .prose ul,
+  .prose ol {
+    margin-bottom: 1.25rem;
+    padding-left: 1.5rem;
+    color: var(--fg);
+  }
+  .prose li {
+    margin-bottom: 0.5rem;
+  }
+
+  .prose blockquote {
+    border-left: 2px solid var(--fg);
+    padding-left: 1rem;
+    margin-bottom: 1.25rem;
+    font-style: italic;
+    color: var(--fg);
+  }
+
+  .prose code {
+    background: var(--code-bg);
+    padding: 0.125rem 0.375rem;
+    font-size: 0.875rem;
+    color: var(--fg);
+  }
+
+  .prose pre {
+    background: var(--code-bg);
+    padding: 1rem;
+    overflow-x: auto;
+    margin-bottom: 1.25rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  .prose pre code {
+    background: transparent;
+    padding: 0;
+  }
+
+  .prose a {
+    color: var(--accent);
+  }
+
+  .prose strong {
+    color: var(--fg);
+  }
+
+  footer {
+    border-color: var(--border) !important;
+  }
+</style>

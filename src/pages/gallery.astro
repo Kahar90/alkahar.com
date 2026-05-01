@@ -1,0 +1,228 @@
+---
+import { Image } from 'astro:assets';
+import Layout from '@/layouts/Layout.astro';
+import galleryData from '@/data/gallery.json';
+import type { ImageMetadata } from 'astro';
+
+const imageModules = import.meta.glob<{ default: ImageMetadata }>('/src/assets/gallery/*.{jpg,jpeg,png,webp}');
+
+const images = galleryData.map((item) => {
+  const modulePath = `/src/assets/gallery/${item.file}`;
+  const module = imageModules[modulePath];
+  return {
+    ...item,
+    module,
+  };
+}).filter((item) => item.module);
+---
+
+<Layout title="Gallery — Nabil Alkahar" wide>
+  <div class="max-w-[65ch] mx-auto mb-8">
+    <h1 class="text-2xl font-bold mb-4">Gallery</h1>
+    <p class="text-muted">
+      Moments captured while wandering. Mostly Asia, mostly after midnight.
+    </p>
+  </div>
+
+  <hr />
+
+  {images.length === 0 ? (
+    <p class="text-muted mt-8 max-w-[65ch] mx-auto">
+      No images yet. Drop photos into <code class="px-1" style="background: var(--code-bg);">src/assets/gallery/</code> and add entries to <code class="px-1" style="background: var(--code-bg);">src/data/gallery.json</code>.
+    </p>
+  ) : (
+    <div class="gallery-grid mt-8">
+      {images.map((item, index) => (
+        <div
+          class={`gallery-item ${index % 5 === 0 ? 'gallery-item-large' : ''} ${index % 7 === 0 ? 'gallery-item-tall' : ''}`}
+          data-gallery-item
+        >
+          <div class="gallery-image-wrapper">
+            <Image
+              src={item.module()}
+              alt={item.alt || item.file}
+              width={1200}
+              height={900}
+              class="gallery-image"
+            />
+            {item.alt && (
+              <div class="gallery-overlay">
+                <p class="gallery-caption">{item.alt}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+
+  <div id="lightbox" class="lightbox" style="display: none;">
+    <div class="lightbox-backdrop"></div>
+    <img id="lightbox-img" class="lightbox-img" src="" alt="" />
+    <div class="lightbox-close">[close]</div>
+  </div>
+</Layout>
+
+<script>
+  const galleryItems = document.querySelectorAll('[data-gallery-item]');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  const lightboxBackdrop = lightbox?.querySelector('.lightbox-backdrop');
+  const lightboxClose = lightbox?.querySelector('.lightbox-close');
+
+  function openLightbox(src, alt) {
+    if (!lightbox || !lightboxImg) return;
+    lightboxImg.src = src;
+    lightboxImg.alt = alt;
+    lightbox.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    if (!lightbox) return;
+    lightbox.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  galleryItems.forEach((item) => {
+    item.addEventListener('click', () => {
+      const img = item.querySelector('img');
+      if (img) {
+        openLightbox(img.src, img.alt);
+      }
+    });
+  });
+
+  lightboxBackdrop?.addEventListener('click', closeLightbox);
+  lightboxClose?.addEventListener('click', closeLightbox);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+</script>
+
+<style>
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-auto-rows: 220px;
+    gap: 4px;
+  }
+
+  .gallery-item {
+    position: relative;
+    overflow: hidden;
+    cursor: zoom-in;
+  }
+
+  .gallery-item-large {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+
+  .gallery-item-tall {
+    grid-row: span 2;
+  }
+
+  .gallery-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .gallery-image-wrapper :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .gallery-item:hover .gallery-image-wrapper :global(img) {
+    transform: scale(1.06);
+  }
+
+  .gallery-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: flex-end;
+    padding: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .gallery-item:hover .gallery-overlay {
+    opacity: 1;
+  }
+
+  .gallery-caption {
+    color: #fafafa;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .lightbox-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    cursor: zoom-out;
+  }
+
+  .lightbox-img {
+    position: relative;
+    z-index: 1;
+    max-width: 90vw;
+    max-height: 85vh;
+    object-fit: contain;
+    border: 1px solid #333;
+  }
+
+  .lightbox-close {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 2;
+    color: #fafafa;
+    font-size: 0.875rem;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .lightbox-close:hover {
+    text-decoration: none;
+    background: #fafafa;
+    color: #111111;
+    padding: 0 2px;
+  }
+
+  @media (max-width: 768px) {
+    .gallery-grid {
+      grid-template-columns: repeat(2, 1fr);
+      grid-auto-rows: 160px;
+    }
+
+    .gallery-item-large {
+      grid-column: span 2;
+      grid-row: span 2;
+    }
+
+    .gallery-item-tall {
+      grid-row: span 2;
+    }
+  }
+</style>
