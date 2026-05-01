@@ -4,12 +4,14 @@ import Layout from '@/layouts/Layout.astro';
 
 <Layout title="404 — Nabil Alkahar">
   <div class="text-center">
-    <pre class="text-base leading-relaxed mb-8" style="color: var(--muted);">
-      /\___/\
-     (  ^.^  )
-      >  ^  <
-     (_______)
-    </pre>
+    <div class="cat-art">
+      <pre>
+         ╱|、
+        (˚ˎ 。7
+         |、˜〵
+        じしˍ,)ノ
+      </pre>
+    </div>
 
     <h1 class="text-2xl font-bold mb-4">404</h1>
     <p class="text-muted mb-8">
@@ -24,7 +26,11 @@ import Layout from '@/layouts/Layout.astro';
 </Layout>
 
 <style>
-  pre {
+  .cat-art pre {
     user-select: none;
+    font-family: 'Segoe UI', 'Noto Sans', 'Hiragino Sans', sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--muted);
   }
 </style>
