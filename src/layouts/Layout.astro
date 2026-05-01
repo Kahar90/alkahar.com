@@ -67,9 +67,11 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
       </div>
     </div>
 
-    <div id="wandering-cat" class="wandering-cat-container" aria-hidden="true">
-      <div id="meow-bubble" class="meow-bubble"></div>
-      <pre id="wandering-cat-art" class="wandering-cat-art"></pre>
+    <div id="cat-floor" aria-hidden="true">
+      <div id="wandering-cat">
+        <div id="meow-bubble" class="meow-bubble"></div>
+        <pre id="wandering-cat-art"></pre>
+      </div>
     </div>
   </body>
 </html>
@@ -236,175 +238,125 @@ $ exit
 
 <script>
 (function () {
-  var container = document.getElementById('wandering-cat');
+  var cat = document.getElementById('wandering-cat');
   var artEl = document.getElementById('wandering-cat-art');
   var bubble = document.getElementById('meow-bubble');
-  var footer = document.querySelector('footer');
+  if (!cat || !artEl || !bubble) return;
 
-  if (!container || !artEl || !bubble || !footer) return;
+  var FRAMES = {
+    stand: ' /\\_/\\ \n( o.o )\n > ^ < ',
+    left:  ' /\\_/\\ \n( o.o )\n/   <  ',
+    right: ' /\\_/\\ \n( o.o )\n >   \\ '
+  };
 
-  var FRAME_REST = [
-    ' /\\_/\\  ',
-    '( o.o ) ',
-    ' >   <  '
-  ];
-  var FRAME_WALK = [
-    ' /\\_/\\  ',
-    '( -.- ) ',
-    ' > ^ <  '
-  ];
-  var currentFrame = 0;
-  var frameTimer = null;
+  var posX = 20;
   var facingRight = true;
+  var isWalking = false;
+  var frameIndex = 0;
+  var walkSequence = ['stand', 'left', 'stand', 'right'];
+  var tickTimer = null;
+  var idleTimer = null;
 
-  function setArt(frame) {
-    artEl.textContent = frame.join('\n');
+  function setFrame(name) {
+    artEl.textContent = FRAMES[name];
   }
 
-  function startWalkAnim() {
-    setArt(FRAME_WALK);
-    clearInterval(frameTimer);
-    frameTimer = setInterval(function () {
-      currentFrame = (currentFrame + 1) % 2;
-      setArt(currentFrame === 0 ? FRAME_WALK : FRAME_REST);
-    }, 400);
-  }
-
-  function stopWalkAnim() {
-    clearInterval(frameTimer);
-    setArt(FRAME_REST);
-  }
-
-  var observer = new IntersectionObserver(function (entries) {
-    if (entries[0].isIntersecting) {
-      container.classList.add('visible');
-      startWalkAnim();
-      startWalking();
-    } else {
-      container.classList.remove('visible');
-      stopWalking();
-      stopWalkAnim();
-    }
-  }, { threshold: 0 });
-  observer.observe(footer);
-
-  var walkTimer = null;
-  var posX = 40;
-  var posY = window.innerHeight * 0.78;
-  var targetX = posX;
-  var targetY = posY;
-  var animFrame = null;
-
-  function randBetween(min, max) {
-    return Math.random() * (max - min) + min;
-  }
-
-  function pickTarget() {
-    var vw = window.innerWidth;
-    var vh = window.innerHeight;
-    var minX = 10;
-    var maxX = vw - 80;
-    var minY = vh * 0.65;
-    var maxY = vh - 100;
-    return { x: randBetween(minX, maxX), y: randBetween(minY, maxY) };
-  }
-
-  function lerp(a, b, t) { return a + (b - a) * t; }
-
-  function animate() {
-    var speed = 0.03;
-    posX = lerp(posX, targetX, speed);
-    posY = lerp(posY, targetY, speed);
-
-    var dx = targetX - posX;
-    if (Math.abs(dx) > 2) {
-      facingRight = dx > 0;
-    }
-
+  function setPos() {
     var scaleX = facingRight ? 1 : -1;
-    container.style.transform = 'translate(' + posX + 'px, ' + posY + 'px) scaleX(' + scaleX + ')';
+    cat.style.transform = 'translateX(' + posX + 'px) scaleX(' + scaleX + ')';
+  }
 
-    if (Math.abs(targetX - posX) > 1 || Math.abs(targetY - posY) > 1) {
-      animFrame = requestAnimationFrame(animate);
-    }
+  function clamp(val, min, max) {
+    return Math.max(min, Math.min(max, val));
   }
 
   function startWalking() {
-    if (walkTimer) return;
-    posX = randBetween(10, window.innerWidth - 80);
-    posY = randBetween(window.innerHeight * 0.65, window.innerHeight - 100);
-    container.style.transform = 'translate(' + posX + 'px, ' + posY + 'px) scaleX(1)';
-    walkTimer = setInterval(function () {
-      var t = pickTarget();
-      targetX = t.x;
-      targetY = t.y;
-      if (animFrame) cancelAnimationFrame(animFrame);
-      animFrame = requestAnimationFrame(animate);
-    }, 3500);
-    var t = pickTarget();
-    targetX = t.x;
-    targetY = t.y;
-    animFrame = requestAnimationFrame(animate);
+    if (isWalking) return;
+    isWalking = true;
+    frameIndex = 0;
+    setFrame(walkSequence[frameIndex]);
+
+    tickTimer = setInterval(function () {
+      frameIndex = (frameIndex + 1) % 4;
+      var frameName = walkSequence[frameIndex];
+      setFrame(frameName);
+
+      var step = 10;
+      if (!facingRight) step = -step;
+      posX += step;
+
+      var maxX = window.innerWidth - 80;
+      if (posX > maxX) {
+        posX = maxX;
+        facingRight = false;
+      } else if (posX < 0) {
+        posX = 0;
+        facingRight = true;
+      }
+
+      setPos();
+
+      if (Math.random() < 0.15) {
+        stopWalking();
+      }
+    }, 280);
   }
 
   function stopWalking() {
-    clearInterval(walkTimer);
-    walkTimer = null;
-    if (animFrame) {
-      cancelAnimationFrame(animFrame);
-      animFrame = null;
-    }
-    stopWalkAnim();
+    isWalking = false;
+    clearInterval(tickTimer);
+    tickTimer = null;
+    setFrame('stand');
+    scheduleNextWalk();
   }
 
-  var lastInteraction = 0;
-  var COOLDOWN = 2000;
-  var CHANCE = 0.3;
+  function scheduleNextWalk() {
+    var delay = Math.random() * 3000 + 2000;
+    idleTimer = setTimeout(function () {
+      if (Math.random() < 0.5) facingRight = !facingRight;
+      startWalking();
+    }, delay);
+  }
 
-  function meow() {
-    bubble.textContent = 'mew!';
-    bubble.classList.add('show');
+  function blink() {
+    if (isWalking) return;
+    var orig = FRAMES.stand;
+    artEl.textContent = ' /\\_/\\ \n( -.o )\n > ^ < ';
     setTimeout(function () {
-      bubble.classList.remove('show');
-    }, 1400);
+      if (!isWalking) setFrame('stand');
+    }, 200);
   }
 
-  function jump() {
-    container.style.transition = 'none';
-    var orig = container.style.transform;
-    var jumpY = posY - 30;
-    container.style.transform = 'translate(' + posX + 'px, ' + jumpY + 'px) scaleX(' + (facingRight ? 1 : -1) + ')';
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        container.style.transition = 'transform 0.3s cubic-bezier(0.46, 1.42, 0.6, 1.0)';
-        container.style.transform = orig;
-      });
-    });
-  }
+  setPos();
+  setFrame('stand');
+  scheduleNextWalk();
+  setInterval(blink, 4000);
 
+  var lastClick = 0;
   artEl.addEventListener('click', function (e) {
     e.stopPropagation();
     var now = Date.now();
-    if (now - lastInteraction < COOLDOWN) return;
-    if (Math.random() > CHANCE) return;
-    lastInteraction = now;
+    if (now - lastClick < 2000) return;
+    if (Math.random() > 0.3) return;
+    lastClick = now;
+
     if (Math.random() < 0.5) {
-      meow();
+      bubble.textContent = 'mew!';
+      bubble.classList.add('show');
+      setTimeout(function () { bubble.classList.remove('show'); }, 1400);
     } else {
-      jump();
+      cat.style.transition = 'transform 0.15s ease-out';
+      cat.style.transform = 'translateX(' + posX + 'px) scaleX(' + (facingRight ? 1 : -1) + ') translateY(-20px)';
+      setTimeout(function () {
+        cat.style.transition = 'transform 0.15s ease-in';
+        setPos();
+      }, 150);
     }
   });
 
-  var resizeDebounce;
   window.addEventListener('resize', function () {
-    clearTimeout(resizeDebounce);
-    resizeDebounce = setTimeout(function () {
-      if (container.classList.contains('visible')) {
-        var t = pickTarget();
-        targetX = t.x;
-        targetY = t.y;
-      }
-    }, 200);
+    posX = clamp(posX, 0, window.innerWidth - 80);
+    setPos();
   });
 })();
 </script>
@@ -665,26 +617,27 @@ $ exit
     }
   }
 
-  .wandering-cat-container {
+  #cat-floor {
     position: fixed;
-    top: 0;
+    bottom: 0;
     left: 0;
+    right: 0;
+    height: 60px;
     z-index: 50;
     pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    will-change: transform;
   }
 
-  .wandering-cat-container.visible {
-    opacity: 1;
+  #wandering-cat {
+    position: absolute;
+    bottom: 4px;
+    left: 0;
     pointer-events: auto;
   }
 
-  .wandering-cat-art {
+  #wandering-cat pre {
     margin: 0;
-    font-size: 0.75rem;
-    line-height: 1.4;
+    font-size: 0.8125rem;
+    line-height: 1.3;
     color: var(--muted);
     white-space: pre;
     cursor: pointer;
