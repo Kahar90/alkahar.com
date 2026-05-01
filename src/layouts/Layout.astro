@@ -49,6 +49,12 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
         <p class="text-xs mt-1" style="color: var(--muted);">
           Last updated: {new Date().toLocaleString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
         </p>
+        <div id="cat-floor" aria-hidden="true">
+          <div id="wandering-cat">
+            <div id="meow-bubble" class="meow-bubble"></div>
+            <pre id="wandering-cat-art"></pre>
+          </div>
+        </div>
       </footer>
     </div>
 
@@ -64,13 +70,6 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
         <div class="easter-egg-body">
           <pre class="easter-egg-output" id="easter-egg-output"></pre>
         </div>
-      </div>
-    </div>
-
-    <div id="cat-floor" aria-hidden="true">
-      <div id="wandering-cat">
-        <div id="meow-bubble" class="meow-bubble"></div>
-        <pre id="wandering-cat-art"></pre>
       </div>
     </div>
   </body>
@@ -241,7 +240,8 @@ $ exit
   var cat = document.getElementById('wandering-cat');
   var artEl = document.getElementById('wandering-cat-art');
   var bubble = document.getElementById('meow-bubble');
-  if (!cat || !artEl || !bubble) return;
+  var floor = document.getElementById('cat-floor');
+  if (!cat || !artEl || !bubble || !floor) return;
 
   var FRAMES = {
     stand: ' /\\_/\\ \n( o.o )\n > ^ < ',
@@ -256,6 +256,10 @@ $ exit
   var walkSequence = ['stand', 'left', 'stand', 'right'];
   var tickTimer = null;
   var idleTimer = null;
+
+  function getMaxX() {
+    return floor.offsetWidth - 70;
+  }
 
   function setFrame(name) {
     artEl.textContent = FRAMES[name];
@@ -285,7 +289,7 @@ $ exit
       if (!facingRight) step = -step;
       posX += step;
 
-      var maxX = window.innerWidth - 80;
+      var maxX = getMaxX();
       if (posX > maxX) {
         posX = maxX;
         facingRight = false;
@@ -320,7 +324,6 @@ $ exit
 
   function blink() {
     if (isWalking) return;
-    var orig = FRAMES.stand;
     artEl.textContent = ' /\\_/\\ \n( -.o )\n > ^ < ';
     setTimeout(function () {
       if (!isWalking) setFrame('stand');
@@ -355,7 +358,7 @@ $ exit
   });
 
   window.addEventListener('resize', function () {
-    posX = clamp(posX, 0, window.innerWidth - 80);
+    posX = clamp(posX, 0, getMaxX());
     setPos();
   });
 })();
@@ -618,20 +621,15 @@ $ exit
   }
 
   #cat-floor {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 60px;
-    z-index: 50;
-    pointer-events: none;
+    position: relative;
+    height: 50px;
+    margin-top: 1rem;
   }
 
   #wandering-cat {
     position: absolute;
-    bottom: 4px;
+    bottom: 0;
     left: 0;
-    pointer-events: auto;
   }
 
   #wandering-cat pre {
