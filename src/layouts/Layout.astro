@@ -1,4 +1,6 @@
 ---
+import { ViewTransitions } from 'astro:transitions';
+
 export interface Props {
   title: string;
   description?: string;
@@ -15,6 +17,7 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <ViewTransitions />
     <script is:inline>
       const theme = localStorage.getItem('theme');
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -76,13 +79,42 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
 </html>
 
 <script>
-  const toggle = document.getElementById('theme-toggle');
-  const html = document.documentElement;
+  (function () {
+    var toggleHandler = null;
 
-  toggle?.addEventListener('click', () => {
-    html.classList.toggle('dark');
-    localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
-  });
+    function applyTheme() {
+      var theme = localStorage.getItem('theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var html = document.documentElement;
+      if (theme === 'dark' || (!theme && prefersDark)) {
+        html.classList.add('dark');
+      } else {
+        html.classList.remove('dark');
+      }
+    }
+
+    function initToggle() {
+      var toggle = document.getElementById('theme-toggle');
+      if (!toggle) return;
+
+      if (toggleHandler) {
+        toggle.removeEventListener('click', toggleHandler);
+      }
+
+      toggleHandler = function () {
+        var html = document.documentElement;
+        html.classList.toggle('dark');
+        localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+      };
+
+      toggle.addEventListener('click', toggleHandler);
+    }
+
+    document.addEventListener('astro:page-load', function () {
+      applyTheme();
+      initToggle();
+    });
+  })();
 </script>
 
 <script>
@@ -237,130 +269,162 @@ $ exit
 
 <script>
 (function () {
-  var cat = document.getElementById('wandering-cat');
-  var artEl = document.getElementById('wandering-cat-art');
-  var bubble = document.getElementById('meow-bubble');
-  var floor = document.getElementById('cat-floor');
-  if (!cat || !artEl || !bubble || !floor) return;
-
-  var FRAMES = {
-    stand: ' /\\_/\\ \n( o.o )\n > ^ < ',
-    left:  ' /\\_/\\ \n( o.o )\n/   <  ',
-    right: ' /\\_/\\ \n( o.o )\n >   \\ '
-  };
-
-  var posX = 20;
-  var facingRight = true;
-  var isWalking = false;
-  var frameIndex = 0;
-  var walkSequence = ['stand', 'left', 'stand', 'right'];
   var tickTimer = null;
   var idleTimer = null;
+  var blinkTimer = null;
+  var clickHandler = null;
+  var resizeHandler = null;
 
-  function getMaxX() {
-    return floor.offsetWidth - 70;
+  function cleanupCat() {
+    if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+    if (blinkTimer) { clearInterval(blinkTimer); blinkTimer = null; }
+    if (clickHandler) {
+      var oldArt = document.getElementById('wandering-cat-art');
+      if (oldArt) oldArt.removeEventListener('click', clickHandler);
+      clickHandler = null;
+    }
+    if (resizeHandler) {
+      window.removeEventListener('resize', resizeHandler);
+      resizeHandler = null;
+    }
   }
 
-  function setFrame(name) {
-    artEl.textContent = FRAMES[name];
-  }
+  function initCat() {
+    cleanupCat();
 
-  function setPos() {
-    var scaleX = facingRight ? 1 : -1;
-    cat.style.transform = 'translateX(' + posX + 'px) scaleX(' + scaleX + ')';
-  }
+    var cat = document.getElementById('wandering-cat');
+    var artEl = document.getElementById('wandering-cat-art');
+    var bubble = document.getElementById('meow-bubble');
+    var floor = document.getElementById('cat-floor');
+    if (!cat || !artEl || !bubble || !floor) return;
 
-  function clamp(val, min, max) {
-    return Math.max(min, Math.min(max, val));
-  }
+    var FRAMES = {
+      stand: ' /\\_/\\ \n( o.o )\n > ^ < ',
+      left:  ' /\\_/\\ \n( o.o )\n/   <  ',
+      right: ' /\\_/\\ \n( o.o )\n >   \\ '
+    };
 
-  function startWalking() {
-    if (isWalking) return;
-    isWalking = true;
-    frameIndex = 0;
-    setFrame(walkSequence[frameIndex]);
+    var posX = 20;
+    var facingRight = true;
+    var isWalking = false;
+    var frameIndex = 0;
+    var walkSequence = ['stand', 'left', 'stand', 'right'];
 
-    tickTimer = setInterval(function () {
-      frameIndex = (frameIndex + 1) % 4;
-      var frameName = walkSequence[frameIndex];
-      setFrame(frameName);
+    function getMaxX() {
+      return floor.offsetWidth - 70;
+    }
 
-      var step = 10;
-      if (!facingRight) step = -step;
-      posX += step;
+    function setFrame(name) {
+      artEl.textContent = FRAMES[name];
+    }
 
-      var maxX = getMaxX();
-      if (posX > maxX) {
-        posX = maxX;
-        facingRight = false;
-      } else if (posX < 0) {
-        posX = 0;
-        facingRight = true;
-      }
+    function setPos() {
+      var scaleX = facingRight ? 1 : -1;
+      cat.style.transform = 'translateX(' + posX + 'px) scaleX(' + scaleX + ')';
+    }
 
-      setPos();
+    function clamp(val, min, max) {
+      return Math.max(min, Math.min(max, val));
+    }
 
-      if (Math.random() < 0.15) {
-        stopWalking();
-      }
-    }, 280);
-  }
+    function startWalking() {
+      if (isWalking) return;
+      isWalking = true;
+      frameIndex = 0;
+      setFrame(walkSequence[frameIndex]);
 
-  function stopWalking() {
-    isWalking = false;
-    clearInterval(tickTimer);
-    tickTimer = null;
+      tickTimer = setInterval(function () {
+        frameIndex = (frameIndex + 1) % 4;
+        var frameName = walkSequence[frameIndex];
+        setFrame(frameName);
+
+        var step = 10;
+        if (!facingRight) step = -step;
+        posX += step;
+
+        var maxX = getMaxX();
+        if (posX > maxX) {
+          posX = maxX;
+          facingRight = false;
+        } else if (posX < 0) {
+          posX = 0;
+          facingRight = true;
+        }
+
+        setPos();
+
+        if (Math.random() < 0.15) {
+          stopWalking();
+        }
+      }, 280);
+    }
+
+    function stopWalking() {
+      isWalking = false;
+      if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+      setFrame('stand');
+      scheduleNextWalk();
+    }
+
+    function scheduleNextWalk() {
+      var delay = Math.random() * 3000 + 2000;
+      idleTimer = setTimeout(function () {
+        if (Math.random() < 0.5) facingRight = !facingRight;
+        startWalking();
+      }, delay);
+    }
+
+    function blink() {
+      if (isWalking) return;
+      artEl.textContent = ' /\\_/\\ \n( -.o )\n > ^ < ';
+      setTimeout(function () {
+        if (!isWalking) setFrame('stand');
+      }, 200);
+    }
+
+    setPos();
     setFrame('stand');
     scheduleNextWalk();
+    blinkTimer = setInterval(blink, 4000);
+
+    var lastClick = 0;
+    clickHandler = function (e) {
+      e.stopPropagation();
+      var now = Date.now();
+      if (now - lastClick < 2000) return;
+      if (Math.random() > 0.3) return;
+      lastClick = now;
+
+      if (Math.random() < 0.5) {
+        bubble.textContent = 'mew!';
+        bubble.classList.add('show');
+        setTimeout(function () { bubble.classList.remove('show'); }, 1400);
+      } else {
+        cat.style.transition = 'transform 0.15s ease-out';
+        cat.style.transform = 'translateX(' + posX + 'px) scaleX(' + (facingRight ? 1 : -1) + ') translateY(-20px)';
+        setTimeout(function () {
+          cat.style.transition = 'transform 0.15s ease-in';
+          setPos();
+        }, 150);
+      }
+    };
+    artEl.addEventListener('click', clickHandler);
+
+    resizeHandler = function () {
+      posX = clamp(posX, 0, getMaxX());
+      setPos();
+    };
+    window.addEventListener('resize', resizeHandler);
   }
 
-  function scheduleNextWalk() {
-    var delay = Math.random() * 3000 + 2000;
-    idleTimer = setTimeout(function () {
-      if (Math.random() < 0.5) facingRight = !facingRight;
-      startWalking();
-    }, delay);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCat);
+  } else {
+    initCat();
   }
 
-  function blink() {
-    if (isWalking) return;
-    artEl.textContent = ' /\\_/\\ \n( -.o )\n > ^ < ';
-    setTimeout(function () {
-      if (!isWalking) setFrame('stand');
-    }, 200);
-  }
-
-  setPos();
-  setFrame('stand');
-  scheduleNextWalk();
-  setInterval(blink, 4000);
-
-  var lastClick = 0;
-  artEl.addEventListener('click', function (e) {
-    e.stopPropagation();
-    var now = Date.now();
-    if (now - lastClick < 2000) return;
-    if (Math.random() > 0.3) return;
-    lastClick = now;
-
-    if (Math.random() < 0.5) {
-      bubble.textContent = 'mew!';
-      bubble.classList.add('show');
-      setTimeout(function () { bubble.classList.remove('show'); }, 1400);
-    } else {
-      cat.style.transition = 'transform 0.15s ease-out';
-      cat.style.transform = 'translateX(' + posX + 'px) scaleX(' + (facingRight ? 1 : -1) + ') translateY(-20px)';
-      setTimeout(function () {
-        cat.style.transition = 'transform 0.15s ease-in';
-        setPos();
-      }, 150);
-    }
-  });
-
-  window.addEventListener('resize', function () {
-    posX = clamp(posX, 0, getMaxX());
-    setPos();
-  });
+  document.addEventListener('astro:page-load', initCat);
 })();
 </script>
 

@@ -38,6 +38,13 @@ posts.sort((a, b) => new Date(b.data.date).valueOf() - new Date(a.data.date).val
             {post.data.excerpt && (
               <p class="text-muted text-sm">{post.data.excerpt}</p>
             )}
+            {post.data.tags && post.data.tags.length > 0 && (
+              <div class="flex gap-2 mt-2">
+                {post.data.tags.map((tag) => (
+                  <span class="text-xs text-muted">#{tag}</span>
+                ))}
+              </div>
+            )}
           </article>
         </li>
       ))}

@@ -2,6 +2,7 @@
 title: "From Software Engineer to Solutions Architect"
 date: "2025-04-20"
 excerpt: "Reflections on transitioning from writing code to designing systems, and what I've learned along the way."
+tags: ["career"]
 ---
 
 Three years ago I was writing React components and GraphQL resolvers at Lizard Global. Today I'm architecting multi-region cloud deployments at Huawei. The transition from Software Engineer to Solutions Architect has been one of the most challenging and rewarding shifts of my career.

@@ -18,9 +18,11 @@ const readingTime = Math.ceil(post.body.split(/\s+/).length / 200);
 
 <Layout title={`${post.data.title} — Nabil Alkahar`}>
   <article>
+    <div id="reading-progress" aria-hidden="true"></div>
+
     <header class="mb-8">
       <h1 class="text-2xl font-bold mb-2">{post.data.title}</h1>
-      <div class="flex gap-4 text-sm text-muted">
+      <div class="flex flex-wrap gap-4 text-sm text-muted">
         <time datetime={post.data.date}>
           {new Date(post.data.date).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -29,6 +31,13 @@ const readingTime = Math.ceil(post.body.split(/\s+/).length / 200);
           })}
         </time>
         <span>{readingTime} min read</span>
+        {post.data.tags && post.data.tags.length > 0 && (
+          <div class="flex gap-2">
+            {post.data.tags.map((tag) => (
+              <span>#{tag}</span>
+            ))}
+          </div>
+        )}
       </div>
     </header>
 
@@ -39,3 +48,43 @@ const readingTime = Math.ceil(post.body.split(/\s+/).length / 200);
     </div>
   </article>
 </Layout>
+
+<script>
+  (function() {
+    var bar = document.getElementById('reading-progress');
+    if (!bar) return;
+
+    var ticking = false;
+
+    function updateProgress() {
+      var scrollTop = window.scrollY || document.documentElement.scrollTop;
+      var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      var progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      bar.style.width = progress + '%';
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', function() {
+      if (!ticking) {
+        requestAnimationFrame(updateProgress);
+        ticking = true;
+      }
+    });
+
+    updateProgress();
+  })();
+</script>
+
+<style>
+  #reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: var(--muted);
+    width: 0%;
+    z-index: 100000;
+    transition: width 0.1s ease-out;
+    opacity: 0.6;
+  }
+</style>

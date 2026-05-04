@@ -44,6 +44,8 @@ const images = galleryData.map((item) => {
               width={1200}
               height={900}
               class="gallery-image"
+              loading="lazy"
+              decoding="async"
             />
             {item.alt && (
               <div class="gallery-overlay">

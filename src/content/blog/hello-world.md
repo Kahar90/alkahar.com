@@ -2,6 +2,7 @@
 title: "Hello World"
 date: "2025-01-15"
 excerpt: "The first post on my new minimal blog. Why I chose simplicity over complexity."
+tags: ["thoughts"]
 ---
 
 This is the first post on my new minimal blog.
