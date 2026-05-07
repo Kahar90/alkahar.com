@@ -7,6 +7,8 @@
 .env.production
 .DS_Store
 package-lock.json
+.vercel
+*.tsbuildinfo
 
 # Uncomment the line below if you want to keep gallery images out of git
 # src/assets/gallery/

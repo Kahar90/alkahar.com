@@ -29,6 +29,7 @@ Open [http://localhost:4321](http://localhost:4321).
    title: "Your Post Title"
    date: "2025-05-01"
    excerpt: "Short description for the listing page"
+   tags: ["topic"]
    ---
    ```
 3. Write your content in Markdown below the frontmatter
@@ -51,11 +52,10 @@ No imports needed — Astro serves them as static files.
    ```json
    {
      "file": "your-photo.jpg",
-     "alt": "Description shown on hover (optional)"
+     "alt": "Description shown on hover and for screen readers"
    }
    ```
 3. Images are automatically optimized by Sharp at build time
-4. Leave `"alt"` as `""` if you don't want a caption overlay
 
 ## Building for Production
 
@@ -67,11 +67,14 @@ The static site is output to the `dist/` directory. Deploy it to GitHub Pages, V
 
 ## Dark Mode
 
-Click the `[theme]` button in the top-right corner to toggle between light and dark mode. Your preference is saved in localStorage and respected on your next visit. The site also respects your system preference on first load.
+Click the theme toggle button in the top-right corner to switch between light and dark mode. Your preference is saved in `localStorage` and respected on your next visit. The site also respects your system preference on first load.
 
-## Custom Domain
+## Accessibility
 
-Configure your DNS to point to your hosting provider. No additional config needed in the code.
+- Skip-to-content link for keyboard users
+- Focus management in gallery lightbox and easter egg dialog
+- `prefers-reduced-motion` support disables animations
+- All gallery images include descriptive alt text
 
 ## License
 
