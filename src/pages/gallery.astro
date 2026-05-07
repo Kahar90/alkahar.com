@@ -36,6 +36,9 @@ const images = galleryData.map((item) => {
         <div
           class={`gallery-item ${index % 5 === 0 ? 'gallery-item-large' : ''} ${index % 7 === 0 ? 'gallery-item-tall' : ''}`}
           data-gallery-item
+          role="button"
+          tabindex="0"
+          aria-label={`View photo ${index + 1}`}
         >
           <div class="gallery-image-wrapper">
             <Image
@@ -61,7 +64,7 @@ const images = galleryData.map((item) => {
   <div id="lightbox" class="lightbox" style="display: none;">
     <div class="lightbox-backdrop"></div>
     <img id="lightbox-img" class="lightbox-img" src="" alt="" />
-    <div class="lightbox-close">[close]</div>
+    <button class="lightbox-close" aria-label="Close lightbox">[close]</button>
   </div>
 </Layout>
 
@@ -72,18 +75,26 @@ const images = galleryData.map((item) => {
   const lightboxBackdrop = lightbox?.querySelector('.lightbox-backdrop');
   const lightboxClose = lightbox?.querySelector('.lightbox-close');
 
+  let lastFocusedElement = null;
+
   function openLightbox(src, alt) {
     if (!lightbox || !lightboxImg) return;
+    lastFocusedElement = document.activeElement;
     lightboxImg.src = src;
     lightboxImg.alt = alt;
     lightbox.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    lightboxClose?.focus();
   }
 
   function closeLightbox() {
     if (!lightbox) return;
     lightbox.style.display = 'none';
     document.body.style.overflow = '';
+    if (lastFocusedElement) {
+      lastFocusedElement.focus();
+      lastFocusedElement = null;
+    }
   }
 
   galleryItems.forEach((item) => {
@@ -91,6 +102,15 @@ const images = galleryData.map((item) => {
       const img = item.querySelector('img');
       if (img) {
         openLightbox(img.src, img.alt);
+      }
+    });
+    item.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const img = item.querySelector('img');
+        if (img) {
+          openLightbox(img.src, img.alt);
+        }
       }
     });
   });
@@ -193,7 +213,7 @@ const images = galleryData.map((item) => {
     border: 1px solid #333;
   }
 
-  .lightbox-close {
+  button.lightbox-close {
     position: fixed;
     top: 1.5rem;
     right: 1.5rem;
@@ -203,9 +223,13 @@ const images = galleryData.map((item) => {
     cursor: pointer;
     text-decoration: underline;
     text-underline-offset: 2px;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
   }
 
-  .lightbox-close:hover {
+  button.lightbox-close:hover {
     text-decoration: none;
     background: #fafafa;
     color: #111111;

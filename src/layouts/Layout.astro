@@ -8,6 +8,8 @@ export interface Props {
 }
 
 const { title, description = 'Personal website of Nabil Alkahar', wide = false } = Astro.props;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const ogImageURL = new URL('/og.jpg', Astro.site);
 ---
 
 <!DOCTYPE html>
@@ -17,15 +19,19 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL.href} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://alkahar-com.vercel.app" />
-    <meta property="og:image" content="https://alkahar-com.vercel.app/og.jpg" />
+    <meta property="og:url" content={canonicalURL.href} />
+    <meta property="og:image" content={ogImageURL.href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content="https://alkahar-com.vercel.app/og.jpg" />
+    <meta name="twitter:image" content={ogImageURL.href} />
     <ViewTransitions />
     <script is:inline>
       const theme = localStorage.getItem('theme');
@@ -36,14 +42,17 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
     </script>
   </head>
   <body class="min-h-screen font-mono transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100001] focus:px-4 focus:py-2 focus:bg-fg focus:text-bg">
+      Skip to content
+    </a>
     <div class={wide ? 'w-full px-6 py-12' : 'max-w-[65ch] mx-auto px-6 py-12'}>
       <header class="mb-12 flex flex-wrap justify-between items-center gap-y-3">
         <nav class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
-          <a href="/" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg">home</a>
-          <a href="/about" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg">about</a>
-          <a href="/blog" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg">blog</a>
-          <a href="/uses" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg">uses</a>
-          <a href="/gallery" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg">gallery</a>
+          <a href="/" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg" aria-current={Astro.url.pathname === '/' ? 'page' : undefined}>home</a>
+          <a href="/about" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg" aria-current={Astro.url.pathname === '/about/' ? 'page' : undefined}>about</a>
+          <a href="/blog" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg" aria-current={Astro.url.pathname.startsWith('/blog') ? 'page' : undefined}>blog</a>
+          <a href="/uses" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg" aria-current={Astro.url.pathname === '/uses/' ? 'page' : undefined}>uses</a>
+          <a href="/gallery" class="text-accent underline underline-offset-2 hover:no-underline hover:bg-fg hover:text-bg" aria-current={Astro.url.pathname === '/gallery/' ? 'page' : undefined}>gallery</a>
         </nav>
         <button
           id="theme-toggle"
@@ -67,7 +76,7 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
           </svg>
         </button>
       </header>
-      <main>
+      <main id="main-content">
         <slot />
       </main>
       <footer class={wide ? 'max-w-[65ch] mx-auto mt-24 pt-6 border-t border-neutral-200 text-sm text-muted' : 'mt-24 pt-6 border-t border-neutral-200 text-sm text-muted'}>
@@ -84,14 +93,14 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
       </footer>
     </div>
 
-    <div id="easter-egg" class="easter-egg" style="display: none;">
+    <div id="easter-egg" class="easter-egg" style="display: none;" role="dialog" aria-modal="true" aria-label="Secret terminal" tabindex="-1">
       <div class="easter-egg-backdrop"></div>
       <div class="easter-egg-terminal">
         <div class="easter-egg-header">
           <span class="easter-egg-dot" style="background:#ff5f57;"></span>
           <span class="easter-egg-dot" style="background:#febc2e;"></span>
           <span class="easter-egg-dot" style="background:#28c840;"></span>
-          <span class="easter-egg-title">terminal — nabilalkahar.com</span>
+          <span class="easter-egg-title">terminal — alkahar-com.vercel.app</span>
         </div>
         <div class="easter-egg-body">
           <pre class="easter-egg-output" id="easter-egg-output"></pre>
@@ -163,9 +172,12 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
 </script>
 
 <script>
-  const CURSOR_KEY = 'cursor-trail';
-  let trailOn = localStorage.getItem(CURSOR_KEY) !== 'off';
-  let dots = [];
+(function () {
+  var CURSOR_KEY = 'cursor-trail';
+  var trailOn = localStorage.getItem(CURSOR_KEY) !== 'off';
+  var dots = [];
+  var mousemoveHandler = null;
+  var keydownHandler = null;
 
   function enableTrail() {
     trailOn = true;
@@ -175,64 +187,83 @@ const { title, description = 'Personal website of Nabil Alkahar', wide = false }
   function disableTrail() {
     trailOn = false;
     localStorage.removeItem(CURSOR_KEY);
-    dots.forEach(d => d.remove());
+    dots.forEach(function (d) { d.remove(); });
     dots = [];
   }
 
-  document.addEventListener('mousemove', function(e) {
-    if (!trailOn) return;
-    const dot = document.createElement('span');
-    dot.textContent = '·';
-    dot.style.cssText = `
-      position: fixed;
-      left: ${e.clientX}px;
-      top: ${e.clientY}px;
-      pointer-events: none;
-      z-index: 99999;
-      color: var(--muted);
-      opacity: 0.5;
-      font-size: 0.875rem;
-      transition: opacity 1s ease-out, transform 1s ease-out;
-    `;
-    document.body.appendChild(dot);
-    dots.push(dot);
-
-    requestAnimationFrame(() => {
-      dot.style.opacity = '0';
-      dot.style.transform = 'translateY(8px)';
-    });
-
-    setTimeout(() => {
-      dot.remove();
-      dots = dots.filter(d => d !== dot);
-    }, 1100);
-
-    if (dots.length > 40) {
-      const old = dots.shift();
-      old?.remove();
+  function cleanupTrail() {
+    if (mousemoveHandler) {
+      document.removeEventListener('mousemove', mousemoveHandler);
+      mousemoveHandler = null;
     }
-  });
+    if (keydownHandler) {
+      document.removeEventListener('keydown', keydownHandler);
+      keydownHandler = null;
+    }
+    dots.forEach(function (d) { d.remove(); });
+    dots = [];
+  }
 
-  document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.shiftKey && e.key === 'T') {
-      e.preventDefault();
-      if (trailOn) {
-        disableTrail();
-      } else {
-        enableTrail();
+  function initTrail() {
+    cleanupTrail();
+
+    mousemoveHandler = function (e) {
+      if (!trailOn) return;
+      var dot = document.createElement('span');
+      dot.textContent = '·';
+      dot.style.cssText = 'position:fixed;left:' + e.clientX + 'px;top:' + e.clientY + 'px;pointer-events:none;z-index:99999;color:var(--muted);opacity:0.5;font-size:0.875rem;transition:opacity 1s ease-out,transform 1s ease-out;';
+      document.body.appendChild(dot);
+      dots.push(dot);
+
+      requestAnimationFrame(function () {
+        dot.style.opacity = '0';
+        dot.style.transform = 'translateY(8px)';
+      });
+
+      setTimeout(function () {
+        dot.remove();
+        dots = dots.filter(function (d) { return d !== dot; });
+      }, 1100);
+
+      if (dots.length > 40) {
+        var old = dots.shift();
+        old?.remove();
       }
-    }
-  });
+    };
+
+    keydownHandler = function (e) {
+      if (e.ctrlKey && e.shiftKey && e.key === 'T') {
+        e.preventDefault();
+        if (trailOn) {
+          disableTrail();
+        } else {
+          enableTrail();
+        }
+      }
+    };
+
+    document.addEventListener('mousemove', mousemoveHandler);
+    document.addEventListener('keydown', keydownHandler);
+  }
+
+  document.addEventListener('astro:before-swap', cleanupTrail);
+  document.addEventListener('astro:page-load', initTrail);
+
+  if (document.readyState !== 'loading') {
+    initTrail();
+  }
+})();
 </script>
 
 <script>
-  const KONAMI = [
+(function () {
+  var KONAMI = [
     'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
     'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight',
     'KeyB', 'KeyA'
   ];
 
-  const SECRET = `
+  var SECRET = `
 $ whoami
 nabil_alkahar
 
@@ -257,8 +288,10 @@ $ fortune
 $ exit
   `.trim();
 
-  let konamiIndex = 0;
-  let typewriterTimer = null;
+  var konamiIndex = 0;
+  var typewriterTimer = null;
+  var focusTrapHandler = null;
+  var lastFocusedElement = null;
 
   document.addEventListener('keydown', function handler(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -275,18 +308,54 @@ $ exit
     }
   });
 
+  function getFocusable(container) {
+    return container.querySelectorAll('a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])');
+  }
+
+  function trapFocus(e) {
+    var overlay = document.getElementById('easter-egg');
+    if (!overlay) return;
+    var focusable = Array.from(getFocusable(overlay));
+    if (focusable.length === 0) {
+      e.preventDefault();
+      return;
+    }
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  }
+
   function triggerEasterEgg() {
-    const overlay = document.getElementById('easter-egg');
-    const output = document.getElementById('easter-egg-output');
+    var overlay = document.getElementById('easter-egg');
+    var output = document.getElementById('easter-egg-output');
     if (!overlay || !output) return;
 
+    lastFocusedElement = document.activeElement;
     overlay.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     output.textContent = '';
 
-    let i = 0;
+    overlay.focus();
+
+    if (focusTrapHandler) {
+      overlay.removeEventListener('keydown', focusTrapHandler);
+    }
+    focusTrapHandler = trapFocus;
+    overlay.addEventListener('keydown', focusTrapHandler);
+
+    var i = 0;
     clearInterval(typewriterTimer);
-    typewriterTimer = setInterval(() => {
+    typewriterTimer = setInterval(function () {
       if (i < SECRET.length) {
         output.textContent += SECRET[i];
         i++;
@@ -297,11 +366,19 @@ $ exit
   }
 
   function closeEasterEgg() {
-    const overlay = document.getElementById('easter-egg');
+    var overlay = document.getElementById('easter-egg');
     if (!overlay) return;
     overlay.style.display = 'none';
     document.body.style.overflow = '';
     clearInterval(typewriterTimer);
+    if (focusTrapHandler) {
+      overlay.removeEventListener('keydown', focusTrapHandler);
+      focusTrapHandler = null;
+    }
+    if (lastFocusedElement) {
+      lastFocusedElement.focus();
+      lastFocusedElement = null;
+    }
   }
 
   document.getElementById('easter-egg')?.querySelector('.easter-egg-backdrop')?.addEventListener('click', closeEasterEgg);
@@ -310,6 +387,7 @@ $ exit
       closeEasterEgg();
     }
   });
+})();
 </script>
 
 <script>
@@ -691,7 +769,7 @@ $ exit
     }
 
     a[href^="/"]::after {
-      content: " (https://nabilalkahar.com" attr(href) ")";
+      content: " (https://alkahar-com.vercel.app" attr(href) ")";
       font-size: 0.8em;
       color: #666666;
     }
@@ -784,5 +862,18 @@ $ exit
 
   html.dark body::before {
     opacity: 0.04;
+  }
+
+  a[aria-current="page"] {
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 </style>
